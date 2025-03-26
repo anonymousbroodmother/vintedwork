@@ -38,7 +38,7 @@ fish_data = {
     "🐟 Карп": {"image": "https://carptoday.ru/wp-content/uploads/2022/02/1000x600-text-kopiya-kopiya-kopiya-kopiya-768x461.png", "chance": 20, "price": 5},
     "🐠 Форель": {"image": "https://lh6.googleusercontent.com/proxy/iOVst3UJmJdtp0dsYjePgJyK9iKJ7QZ2jxKZYJV3h-24rzAm5F9z5aZA_etRq-koZpnqR1XcEuroAVoYvbgPmY5QXsAd3DBvOtRnJInMM0njVoFWA8AHkZdptnuG4WThffPWNydv1g", "chance": 25, "price": 10},
     "🐡 Рыба-шар": {"image": "https://wildfauna.ru/wp-content/uploads/2019/03/ryba-shar-33.jpg", "chance": 20, "price": 15},
-    "🦈 Акула": {"image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/White_shark.jpg/800px-White_shark.jpg", "chance": 10, "price": 50},
+    "🦈 Акула": {"image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/White_shark.jpg/800px-White_shark.jpg", "chance": 0.1, "price": 50},
     "🐙 Осьминог": {"image": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Octopus_vulgaris_02.JPG", "chance": 8, "price": 20},
     "🦀 Краб": {"image": "https://www.pharmocean.ru/sites/default/files/article/11_07_krab.jpg", "chance": 5, "price": 30},
     "💎 Алмаз": {"image": "https://sunlight.net/wiki/wp-content/uploads/2017/05/brilliant-5-400x267.jpg", "chance": 1, "price": 100},
@@ -56,7 +56,7 @@ reply_keyboard = [["Рыбачить", "Инвентарь"], ["Магазин",
 markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
 
 def get_user(user_id):
-    """Получение данных пользователя из базы данных."""
+    
     cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
     user = cursor.fetchone()
     if not user:
@@ -66,7 +66,7 @@ def get_user(user_id):
     return {"user_id": user[0], "balance": user[1], "rod": user[2]}
 
 def update_user(user_id, balance=None, rod=None):
-    """Обновление данных пользователя в базе данных."""
+    
     if balance is not None:
         cursor.execute('UPDATE users SET balance = ? WHERE user_id = ?', (balance, user_id))
     if rod is not None:
@@ -74,12 +74,12 @@ def update_user(user_id, balance=None, rod=None):
     conn.commit()
 
 def get_inventory(user_id):
-    """Получение инвентаря пользователя."""
+    
     cursor.execute('SELECT item, count FROM inventory WHERE user_id = ?', (user_id,))
     return {item: count for item, count in cursor.fetchall()}
 
 def update_inventory(user_id, item, count):
-    """Обновление инвентаря пользователя."""
+    
     cursor.execute('SELECT count FROM inventory WHERE user_id = ? AND item = ?', (user_id, item))
     current_count = cursor.fetchone()
     if current_count:
