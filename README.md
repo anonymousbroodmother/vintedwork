@@ -60,5 +60,24 @@
 
 1. **Клонируйте репозиторий**:
    ```bash
-   git clone [https://github.com/anonymousbroodmother/vintedwork]
-   cd fishing-bot
+   git clone [https://github.com/anonymousbroodmother/vintedwork.git]
+   cd vintedwork
+   2. Установка зависимостей
+Установите необходимые библиотеки из файла requirements.txt:
+pip install -r requirements.txt
+Если у вас нет файла requirements.txt, создайте его и добавьте следующие зависимости:
+python-telegram-bot==20.5
+sqlite3
+Затем выполните команду:
+pip install python-telegram-bot==20.5
+3. Настройка токена бота
+Создайте файл .env в корневой директории проекта:
+touch .env
+Добавьте в файл .env токен вашего бота:
+BOT_TOKEN=токен бота
+4. Запуск бота
+Запустите бота с помощью команды:
+python bot.py
+Если всё настроено правильно, бот начнёт работать, и вы сможете взаимодействовать с ним через Telegram.
+
+
