@@ -14,10 +14,11 @@ fish_data = {
     "🐟 Карп": {"image": "https://carptoday.ru/wp-content/uploads/2022/02/1000x600-text-kopiya-kopiya-kopiya-kopiya-768x461.png", "chance": 20, "price": 5},
     "🐠 Форель": {"image": "https://lh6.googleusercontent.com/proxy/iOVst3UJmJdtp0dsYjePgJyK9iKJ7QZ2jxKZYJV3h-24rzAm5F9z5aZA_etRq-koZpnqR1XcEuroAVoYvbgPmY5QXsAd3DBvOtRnJInMM0njVoFWA8AHkZdptnuG4WThffPWNydv1g", "chance": 25, "price": 10},
     "🐡 Рыба-шар": {"image": "https://wildfauna.ru/wp-content/uploads/2019/03/ryba-shar-33.jpg", "chance": 20, "price": 15},
-    "🦈 Акула": {"image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/White_shark.jpg/800px-White_shark.jpg", "chance": 10, "price": 50},
+    "🦈 Акула": {"image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/White_shark.jpg/800px-White_shark.jpg", "chance": 0.1, "price": 50},
     "🐙 Осьминог": {"image": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Octopus_vulgaris_02.JPG", "chance": 8, "price": 20},
     "🦀 Краб": {"image": "https://www.pharmocean.ru/sites/default/files/article/11_07_krab.jpg", "chance": 5, "price": 30},
     "💎 Алмаз": {"image": "https://sunlight.net/wiki/wp-content/uploads/2017/05/brilliant-5-400x267.jpg", "chance": 1, "price": 100},
+    "Ботинок": {"image": "https://server.spin4spin.com/images/2000000338958/2000000338958-4c68d109099d2c03f77a8ffbdf4a9090.jpg", "chance": 1, "price": 100},
 }
 
 
@@ -57,6 +58,18 @@ async def handle_fish(update: Update, context: CallbackContext) -> None:
     weights = [fish_data[item]["chance"] * rod_bonus for item in items]
     catch = random.choices(items, weights=weights, k=1)[0]
 
+    
+    if catch == "🦈 Акула":
+        balances[user_id] = 0  
+        inventory[user_id] = {}  
+        await update.message.reply_photo(
+            fish_data[catch]["image"],
+            caption=f'{user_name}, вы поймали акулу... но она вас утащила под воду! 🦈💀\n'
+                    f'Вы потеряли все свои монеты и рыбу!',
+            reply_markup=markup
+        )
+        return
+
     if catch in inventory[user_id]:
         inventory[user_id][catch] += 1
     else:
@@ -80,30 +93,31 @@ async def handle_inventory(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text(f"Ваш инвентарь:\n{inventory_text}", reply_markup=markup)
 
 async def handle_shop(update: Update, context: CallbackContext) -> None:
-    user_id = update.message.from_user.id
-    shop_text = "Магазин удочек:\n"
-    shop_text += "\n".join([f"{rod}: {data['price']} монет (Бонус: x{data['bonus']})" for rod, data in rods.items()])
-    shop_text += "\n\nЧтобы купить удочку, используйте команду /buy <название удочки>."
-    await update.message.reply_text(shop_text, reply_markup=markup)
+    keyboard = []
+    for rod, data in rods.items():
+        keyboard.append([InlineKeyboardButton(rod, callback_data=f"buy_{rod}")])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Выберите удочку для покупки:", reply_markup=reply_markup)
 
-async def buy_rod(update: Update, context: CallbackContext) -> None:
-    user_id = update.message.from_user.id
-    try:
-        rod_name = " ".join(context.args)
-        if rod_name not in rods:
-            await update.message.reply_text("Такой удочки нет в магазине.", reply_markup=markup)
-            return
+async def handle_buy_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()
 
-        rod_price = rods[rod_name]["price"]
-        if balances.get(user_id, 0) < rod_price:
-            await update.message.reply_text("Недостаточно монет для покупки.", reply_markup=markup)
-            return
+    user_id = query.from_user.id
+    rod_name = query.data.split("_", 1)[1]
 
-        balances[user_id] -= rod_price
-        user_rods[user_id] = rod_name
-        await update.message.reply_text(f"Вы купили {rod_name}!", reply_markup=markup)
-    except Exception as e:
-        await update.message.reply_text("Ошибка при покупке. Попробуйте снова.", reply_markup=markup)
+    if rod_name not in rods:
+        await query.edit_message_text("Такой удочки нет в магазине.")
+        return
+
+    rod_price = rods[rod_name]["price"]
+    if balances.get(user_id, 0) < rod_price:
+        await query.edit_message_text("Недостаточно монет для покупки.")
+        return
+
+    balances[user_id] -= rod_price
+    user_rods[user_id] = rod_name
+    await query.edit_message_text(f"Вы купили {rod_name}!")
 
 async def sell_fish(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
@@ -138,7 +152,7 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.Text("Магазин"), handle_shop))
     application.add_handler(MessageHandler(filters.Text("Продать рыбу"), sell_fish))
     application.add_handler(CommandHandler("balance", show_balance))
-    application.add_handler(CommandHandler("buy", buy_rod))
+    application.add_handler(CallbackQueryHandler(handle_buy_callback, pattern="^buy_"))
     application.add_handler(MessageHandler(filters.COMMAND, unknown))
 
     application.run_polling()
