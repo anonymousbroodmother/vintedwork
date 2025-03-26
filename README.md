@@ -69,7 +69,7 @@
     python-telegram-bot==20.5
     sqlite3
     Затем выполните команду:
-    pip install python-telegram-bot==20.5
+    pip install python-telegram-bot
     3. Настройка токена бота
     Создайте файл .env в корневой директории проекта:
     touch .env
